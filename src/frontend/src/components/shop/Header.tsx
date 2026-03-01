@@ -2,7 +2,6 @@ import { useCartStore } from "@/stores/cartStore";
 import { ShoppingCart } from "lucide-react";
 import { motion } from "motion/react";
 import { useEffect, useState } from "react";
-import { RoosterLogoSvg } from "./SvgAssets";
 
 export function Header() {
   const { items, toggleCart } = useCartStore();
@@ -55,7 +54,11 @@ export function Header() {
             cursor: "default",
           }}
         >
-          <RoosterLogoSvg size={44} />
+          <img
+            src="/assets/generated/suhel-poultry-logo-transparent.dim_400x400.png"
+            alt="Suhel Poultry Traders Logo"
+            style={{ width: "52px", height: "52px", objectFit: "contain" }}
+          />
           <div>
             <div
               style={{

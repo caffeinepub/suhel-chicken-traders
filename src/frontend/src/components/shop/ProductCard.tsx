@@ -12,11 +12,21 @@ interface ProductCardProps {
   freshToday: boolean;
 }
 
-const WEIGHT_PRESETS = [
+const CUTTING_WEIGHT_PRESETS = [
   { label: "250g", value: 250 },
   { label: "500g", value: 500 },
   { label: "750g", value: 750 },
   { label: "1 kg", value: 1000 },
+];
+
+const ZINDA_WEIGHT_PRESETS = [
+  { label: "1 kg", value: 1000 },
+  { label: "1.5 kg", value: 1500 },
+  { label: "1.6 kg", value: 1600 },
+  { label: "1.7 kg", value: 1700 },
+  { label: "1.8 kg", value: 1800 },
+  { label: "2 kg", value: 2000 },
+  { label: "2.5 kg", value: 2500 },
 ];
 
 function calcPrice(weightGrams: number, pricePerKg: number): number {
@@ -30,13 +40,16 @@ export function ProductCard({
   inStock,
   freshToday,
 }: ProductCardProps) {
-  const [weight, setWeight] = useState(500);
+  const [weight, setWeight] = useState(id === "zinda" ? 1000 : 500);
   const [customInput, setCustomInput] = useState("");
   const [addedAnim, setAddedAnim] = useState(false);
   const { addItem, openCart } = useCartStore();
 
   const totalPrice = calcPrice(weight, pricePerKg);
   const isCutting = id === "cutting";
+  const WEIGHT_PRESETS = isCutting
+    ? CUTTING_WEIGHT_PRESETS
+    : ZINDA_WEIGHT_PRESETS;
 
   const handleWeightPreset = useCallback((val: number) => {
     setWeight(val);
@@ -60,15 +73,18 @@ export function ProductCard({
     [],
   );
 
+  const maxWeight = isCutting ? 2000 : 2500;
+  const minWeight = isCutting ? 100 : 1000;
+
   const handleIncrement = useCallback(() => {
-    setWeight((prev) => Math.min(prev + 50, 2000));
+    setWeight((prev) => Math.min(prev + 50, maxWeight));
     setCustomInput("");
-  }, []);
+  }, [maxWeight]);
 
   const handleDecrement = useCallback(() => {
-    setWeight((prev) => Math.max(prev - 50, 100));
+    setWeight((prev) => Math.max(prev - 50, minWeight));
     setCustomInput("");
-  }, []);
+  }, [minWeight]);
 
   const handleAddToCart = useCallback(() => {
     if (!inStock) return;
@@ -308,7 +324,7 @@ export function ProductCard({
               <motion.button
                 whileTap={{ scale: 0.9 }}
                 onClick={handleDecrement}
-                disabled={!inStock || weight <= 100}
+                disabled={!inStock || weight <= minWeight}
                 style={{
                   background: "rgba(255,255,255,0.08)",
                   border: "1px solid rgba(255,255,255,0.12)",
@@ -318,7 +334,8 @@ export function ProductCard({
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
-                  cursor: inStock && weight > 100 ? "pointer" : "not-allowed",
+                  cursor:
+                    inStock && weight > minWeight ? "pointer" : "not-allowed",
                   color: "white",
                 }}
               >
@@ -360,7 +377,7 @@ export function ProductCard({
               <motion.button
                 whileTap={{ scale: 0.9 }}
                 onClick={handleIncrement}
-                disabled={!inStock || weight >= 2000}
+                disabled={!inStock || weight >= maxWeight}
                 style={{
                   background: "rgba(255,255,255,0.08)",
                   border: "1px solid rgba(255,255,255,0.12)",
@@ -370,7 +387,8 @@ export function ProductCard({
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
-                  cursor: inStock && weight < 2000 ? "pointer" : "not-allowed",
+                  cursor:
+                    inStock && weight < maxWeight ? "pointer" : "not-allowed",
                   color: "white",
                 }}
               >
@@ -380,9 +398,9 @@ export function ProductCard({
           </div>
           <input
             type="range"
-            min={100}
-            max={2000}
-            step={50}
+            min={minWeight}
+            max={maxWeight}
+            step={isCutting ? 50 : 100}
             value={weight}
             onChange={handleSlider}
             disabled={!inStock}
@@ -391,7 +409,7 @@ export function ProductCard({
               width: "100%",
               height: "6px",
               borderRadius: "3px",
-              background: `linear-gradient(to right, ${accentColor} 0%, ${accentColor} ${((weight - 100) / 1900) * 100}%, rgba(255,255,255,0.12) ${((weight - 100) / 1900) * 100}%, rgba(255,255,255,0.12) 100%)`,
+              background: `linear-gradient(to right, ${accentColor} 0%, ${accentColor} ${((weight - minWeight) / (maxWeight - minWeight)) * 100}%, rgba(255,255,255,0.12) ${((weight - minWeight) / (maxWeight - minWeight)) * 100}%, rgba(255,255,255,0.12) 100%)`,
               outline: "none",
               cursor: inStock ? "pointer" : "not-allowed",
               accentColor: accentColor,
@@ -411,7 +429,7 @@ export function ProductCard({
                 fontFamily: "'Inter', sans-serif",
               }}
             >
-              100g
+              {isCutting ? "100g" : "1 kg"}
             </span>
             <span
               style={{
@@ -420,7 +438,7 @@ export function ProductCard({
                 fontFamily: "'Inter', sans-serif",
               }}
             >
-              2000g
+              {isCutting ? "2 kg" : "2.5 kg"}
             </span>
           </div>
         </div>
