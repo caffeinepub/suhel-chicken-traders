@@ -1,54 +1,111 @@
-import Text "mo:core/Text";
+
 import Map "mo:core/Map";
+import Nat "mo:core/Nat";
+import Iter "mo:core/Iter";
+import Text "mo:core/Text";
 import Runtime "mo:core/Runtime";
 import Array "mo:core/Array";
 import Order "mo:core/Order";
+import Time "mo:core/Time";
+
 
 actor {
-  type Product = {
+  public type Product = {
     name : Text;
     price : Nat;
-    available : Bool;
+    stockQty : Nat;
+    freshToday : Bool;
   };
 
-  module Product {
+  public type OrderItem = {
+    productName : Text;
+    weightGrams : Nat;
+    price : Nat;
+  };
+
+  public type PaymentMethod = {
+    #upI;
+    #cod;
+  };
+
+  public type OrderStatus = {
+    #pending;
+    #accepted;
+    #rejected;
+  };
+
+  public type CustomerOrder = {
+    customerName : Text;
+    phone : Text;
+    address : Text;
+    items : [OrderItem];
+    totalAmount : Nat;
+    paymentMethod : PaymentMethod;
+    timestamp : Int;
+    status : OrderStatus;
+  };
+
+  // Helper module for Product comparison
+  module ProductHelper {
     public func compareByPrice(product1 : Product, product2 : Product) : Order.Order {
       switch (Nat.compare(product1.price, product2.price)) {
-        case (#equal) {
-          Text.compare(product1.name, product2.name);
-        };
+        case (#equal) { Text.compare(product1.name, product2.name) };
         case (order) { order };
       };
     };
   };
 
   let products = Map.empty<Text, Product>();
+  let orders = Map.empty<Nat, CustomerOrder>();
+  var nextOrderId = 0;
 
-  public shared ({ caller }) func addOrUpdateProduct(name : Text, price : Nat, available : Bool) : async () {
+  //-- Admin Functions --//
+  public shared ({ caller }) func addOrUpdateProduct(name : Text, price : Nat, stockQty : Nat, freshToday : Bool) : async () {
     let product : Product = {
       name;
       price;
-      available;
+      stockQty;
+      freshToday;
     };
     products.add(name, product);
   };
 
-  public shared ({ caller }) func removeProduct(name : Text) : async () {
-    if (not products.containsKey(name)) {
-      Runtime.trap("Product not found");
-    };
-    products.remove(name);
-  };
-
-  public query ({ caller }) func getAllProducts() : async [Product] {
+  //-- Customer Functions --//
+  public query ({ caller }) func getAvailableProducts() : async [Product] {
     products.values().toArray();
   };
 
-  public query ({ caller }) func getAvailableProducts() : async [Product] {
-    products.values().toArray().filter(func(p) { p.available });
+  public shared ({ caller }) func placeOrder(customerName : Text, phone : Text, address : Text, items : [OrderItem], paymentMethod : PaymentMethod) : async (Nat, Text) {
+    let totalAmount = items.foldLeft(0, func(acc, item) { acc + item.price });
+
+    let order : CustomerOrder = {
+      customerName;
+      phone;
+      address;
+      items;
+      totalAmount;
+      paymentMethod;
+      timestamp = Time.now();
+      status = #pending;
+    };
+
+    let orderId = nextOrderId;
+    orders.add(orderId, order);
+    nextOrderId += 1;
+    (orderId, "Order placed successfully!");
   };
 
-  public query ({ caller }) func getSortedProductsByPrice() : async [Product] {
-    products.values().toArray().sort(Product.compareByPrice);
+  public query ({ caller }) func getAllOrders() : async [(Nat, CustomerOrder)] {
+    orders.toArray();
+  };
+
+  public shared ({ caller }) func updateOrderStatus(orderId : Nat, status : OrderStatus) : async () {
+    switch (orders.get(orderId)) {
+      case (null) { Runtime.trap("Order does not exist") };
+      case (?order) {
+        let updatedOrder = { order with status };
+        orders.add(orderId, updatedOrder);
+      };
+    };
   };
 };

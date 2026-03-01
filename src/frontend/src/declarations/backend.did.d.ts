@@ -10,17 +10,44 @@ import type { ActorMethod } from '@icp-sdk/core/agent';
 import type { IDL } from '@icp-sdk/core/candid';
 import type { Principal } from '@icp-sdk/core/principal';
 
+export interface CustomerOrder {
+  'customerName' : string,
+  'status' : OrderStatus,
+  'paymentMethod' : PaymentMethod,
+  'totalAmount' : bigint,
+  'address' : string,
+  'timestamp' : bigint,
+  'phone' : string,
+  'items' : Array<OrderItem>,
+}
+export interface OrderItem {
+  'productName' : string,
+  'weightGrams' : bigint,
+  'price' : bigint,
+}
+export type OrderStatus = { 'pending' : null } |
+  { 'rejected' : null } |
+  { 'accepted' : null };
+export type PaymentMethod = { 'cod' : null } |
+  { 'upI' : null };
 export interface Product {
+  'freshToday' : boolean,
+  'stockQty' : bigint,
   'name' : string,
-  'available' : boolean,
   'price' : bigint,
 }
 export interface _SERVICE {
-  'addOrUpdateProduct' : ActorMethod<[string, bigint, boolean], undefined>,
-  'getAllProducts' : ActorMethod<[], Array<Product>>,
+  'addOrUpdateProduct' : ActorMethod<
+    [string, bigint, bigint, boolean],
+    undefined
+  >,
+  'getAllOrders' : ActorMethod<[], Array<[bigint, CustomerOrder]>>,
   'getAvailableProducts' : ActorMethod<[], Array<Product>>,
-  'getSortedProductsByPrice' : ActorMethod<[], Array<Product>>,
-  'removeProduct' : ActorMethod<[string], undefined>,
+  'placeOrder' : ActorMethod<
+    [string, string, string, Array<OrderItem>, PaymentMethod],
+    [bigint, string]
+  >,
+  'updateOrderStatus' : ActorMethod<[bigint, OrderStatus], undefined>,
 }
 export declare const idlService: IDL.ServiceClass;
 export declare const idlInitArgs: IDL.Type[];

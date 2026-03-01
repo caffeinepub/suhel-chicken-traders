@@ -8,35 +8,106 @@
 
 import { IDL } from '@icp-sdk/core/candid';
 
+export const OrderStatus = IDL.Variant({
+  'pending' : IDL.Null,
+  'rejected' : IDL.Null,
+  'accepted' : IDL.Null,
+});
+export const PaymentMethod = IDL.Variant({
+  'cod' : IDL.Null,
+  'upI' : IDL.Null,
+});
+export const OrderItem = IDL.Record({
+  'productName' : IDL.Text,
+  'weightGrams' : IDL.Nat,
+  'price' : IDL.Nat,
+});
+export const CustomerOrder = IDL.Record({
+  'customerName' : IDL.Text,
+  'status' : OrderStatus,
+  'paymentMethod' : PaymentMethod,
+  'totalAmount' : IDL.Nat,
+  'address' : IDL.Text,
+  'timestamp' : IDL.Int,
+  'phone' : IDL.Text,
+  'items' : IDL.Vec(OrderItem),
+});
 export const Product = IDL.Record({
+  'freshToday' : IDL.Bool,
+  'stockQty' : IDL.Nat,
   'name' : IDL.Text,
-  'available' : IDL.Bool,
   'price' : IDL.Nat,
 });
 
 export const idlService = IDL.Service({
-  'addOrUpdateProduct' : IDL.Func([IDL.Text, IDL.Nat, IDL.Bool], [], []),
-  'getAllProducts' : IDL.Func([], [IDL.Vec(Product)], ['query']),
+  'addOrUpdateProduct' : IDL.Func(
+      [IDL.Text, IDL.Nat, IDL.Nat, IDL.Bool],
+      [],
+      [],
+    ),
+  'getAllOrders' : IDL.Func(
+      [],
+      [IDL.Vec(IDL.Tuple(IDL.Nat, CustomerOrder))],
+      ['query'],
+    ),
   'getAvailableProducts' : IDL.Func([], [IDL.Vec(Product)], ['query']),
-  'getSortedProductsByPrice' : IDL.Func([], [IDL.Vec(Product)], ['query']),
-  'removeProduct' : IDL.Func([IDL.Text], [], []),
+  'placeOrder' : IDL.Func(
+      [IDL.Text, IDL.Text, IDL.Text, IDL.Vec(OrderItem), PaymentMethod],
+      [IDL.Nat, IDL.Text],
+      [],
+    ),
+  'updateOrderStatus' : IDL.Func([IDL.Nat, OrderStatus], [], []),
 });
 
 export const idlInitArgs = [];
 
 export const idlFactory = ({ IDL }) => {
+  const OrderStatus = IDL.Variant({
+    'pending' : IDL.Null,
+    'rejected' : IDL.Null,
+    'accepted' : IDL.Null,
+  });
+  const PaymentMethod = IDL.Variant({ 'cod' : IDL.Null, 'upI' : IDL.Null });
+  const OrderItem = IDL.Record({
+    'productName' : IDL.Text,
+    'weightGrams' : IDL.Nat,
+    'price' : IDL.Nat,
+  });
+  const CustomerOrder = IDL.Record({
+    'customerName' : IDL.Text,
+    'status' : OrderStatus,
+    'paymentMethod' : PaymentMethod,
+    'totalAmount' : IDL.Nat,
+    'address' : IDL.Text,
+    'timestamp' : IDL.Int,
+    'phone' : IDL.Text,
+    'items' : IDL.Vec(OrderItem),
+  });
   const Product = IDL.Record({
+    'freshToday' : IDL.Bool,
+    'stockQty' : IDL.Nat,
     'name' : IDL.Text,
-    'available' : IDL.Bool,
     'price' : IDL.Nat,
   });
   
   return IDL.Service({
-    'addOrUpdateProduct' : IDL.Func([IDL.Text, IDL.Nat, IDL.Bool], [], []),
-    'getAllProducts' : IDL.Func([], [IDL.Vec(Product)], ['query']),
+    'addOrUpdateProduct' : IDL.Func(
+        [IDL.Text, IDL.Nat, IDL.Nat, IDL.Bool],
+        [],
+        [],
+      ),
+    'getAllOrders' : IDL.Func(
+        [],
+        [IDL.Vec(IDL.Tuple(IDL.Nat, CustomerOrder))],
+        ['query'],
+      ),
     'getAvailableProducts' : IDL.Func([], [IDL.Vec(Product)], ['query']),
-    'getSortedProductsByPrice' : IDL.Func([], [IDL.Vec(Product)], ['query']),
-    'removeProduct' : IDL.Func([IDL.Text], [], []),
+    'placeOrder' : IDL.Func(
+        [IDL.Text, IDL.Text, IDL.Text, IDL.Vec(OrderItem), PaymentMethod],
+        [IDL.Nat, IDL.Text],
+        [],
+      ),
+    'updateOrderStatus' : IDL.Func([IDL.Nat, OrderStatus], [], []),
   });
 };
 

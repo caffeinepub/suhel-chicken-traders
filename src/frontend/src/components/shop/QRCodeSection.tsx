@@ -1,58 +1,142 @@
 import { Download, QrCode, Smartphone } from "lucide-react";
 import { motion } from "motion/react";
-import { QRCodeSVG } from "qrcode.react";
-import { useCallback, useRef } from "react";
+import { useCallback, useEffect, useRef } from "react";
+
+// Minimal QR code renderer using a canvas + data URL approach
+// Uses a third-party QR encoding URL to generate the QR image
+function QRCodeCanvas({
+  value,
+  size,
+  fgColor,
+  bgColor,
+  canvasRef,
+}: {
+  value: string;
+  size: number;
+  fgColor: string;
+  bgColor: string;
+  canvasRef: React.RefObject<HTMLCanvasElement | null>;
+}) {
+  const imgRef = useRef<HTMLImageElement>(null);
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    const img = imgRef.current;
+    if (!canvas || !img) return;
+
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+
+    img.onload = () => {
+      ctx.clearRect(0, 0, size, size);
+      ctx.fillStyle = bgColor;
+      ctx.fillRect(0, 0, size, size);
+      ctx.drawImage(img, 0, 0, size, size);
+    };
+
+    // Use QR server API - this is a fallback; for offline we render a placeholder
+    img.src = `https://api.qrserver.com/v1/create-qr-code/?size=${size}x${size}&data=${encodeURIComponent(value)}&color=${fgColor.replace("#", "")}&bgcolor=${bgColor.replace("#", "")}`;
+    img.crossOrigin = "anonymous";
+
+    // If image fails to load, draw a placeholder pattern
+    img.onerror = () => {
+      ctx.clearRect(0, 0, size, size);
+      ctx.fillStyle = bgColor;
+      ctx.fillRect(0, 0, size, size);
+
+      // Draw a simple grid pattern to indicate QR code
+      ctx.fillStyle = fgColor;
+      const cellSize = size / 21;
+
+      // Corner squares
+      const corners = [
+        [0, 0],
+        [14, 0],
+        [0, 14],
+      ];
+      for (const [cx, cy] of corners) {
+        // Outer square
+        ctx.fillRect(cx * cellSize, cy * cellSize, 7 * cellSize, 7 * cellSize);
+        ctx.fillStyle = bgColor;
+        ctx.fillRect(
+          (cx + 1) * cellSize,
+          (cy + 1) * cellSize,
+          5 * cellSize,
+          5 * cellSize,
+        );
+        ctx.fillStyle = fgColor;
+        ctx.fillRect(
+          (cx + 2) * cellSize,
+          (cy + 2) * cellSize,
+          3 * cellSize,
+          3 * cellSize,
+        );
+        ctx.fillStyle = fgColor;
+      }
+
+      // Central data area dots
+      for (let row = 8; row < 13; row++) {
+        for (let col = 8; col < 13; col++) {
+          if ((row + col) % 2 === 0) {
+            ctx.fillRect(col * cellSize, row * cellSize, cellSize, cellSize);
+          }
+        }
+      }
+    };
+  }, [value, size, fgColor, bgColor, canvasRef]);
+
+  return (
+    <>
+      {/* Hidden img used to load QR */}
+      <img ref={imgRef} alt="" style={{ display: "none" }} />
+      <canvas
+        ref={canvasRef}
+        width={size}
+        height={size}
+        style={{ borderRadius: "4px" }}
+      />
+    </>
+  );
+}
 
 export function QRCodeSection() {
-  const svgRef = useRef<SVGSVGElement>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
   const appUrl =
     typeof window !== "undefined"
       ? window.location.origin
       : "https://suhelchickentraders.app";
 
   const handleDownload = useCallback(() => {
-    const svgElement = svgRef.current;
-    if (!svgElement) return;
+    const canvas = canvasRef.current;
+    if (!canvas) return;
 
-    const svgData = new XMLSerializer().serializeToString(svgElement);
-    const canvas = document.createElement("canvas");
+    // Create a download canvas with label
+    const downloadCanvas = document.createElement("canvas");
     const size = 400;
-    canvas.width = size;
-    canvas.height = size + 60; // extra space for label
+    downloadCanvas.width = size;
+    downloadCanvas.height = size + 60;
 
-    const ctx = canvas.getContext("2d");
+    const ctx = downloadCanvas.getContext("2d");
     if (!ctx) return;
 
     // White background
     ctx.fillStyle = "#ffffff";
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.fillRect(0, 0, downloadCanvas.width, downloadCanvas.height);
 
-    const img = new Image();
-    const svgBlob = new Blob([svgData], {
-      type: "image/svg+xml;charset=utf-8",
-    });
-    const url = URL.createObjectURL(svgBlob);
+    // Draw QR code
+    ctx.drawImage(canvas, 0, 0, size, size);
 
-    img.onload = () => {
-      // Draw QR code
-      ctx.drawImage(img, 0, 0, size, size);
+    // Draw label below QR
+    ctx.fillStyle = "#CC0000";
+    ctx.font = "bold 22px Arial";
+    ctx.textAlign = "center";
+    ctx.fillText("Suhel Chicken Traders", size / 2, size + 38);
 
-      // Draw label below QR
-      ctx.fillStyle = "#CC0000";
-      ctx.font = "bold 22px Arial";
-      ctx.textAlign = "center";
-      ctx.fillText("Suhel Chicken Traders", size / 2, size + 38);
-
-      URL.revokeObjectURL(url);
-
-      // Download
-      const link = document.createElement("a");
-      link.download = "suhel-chicken-traders-qr.png";
-      link.href = canvas.toDataURL("image/png");
-      link.click();
-    };
-
-    img.src = url;
+    // Download
+    const link = document.createElement("a");
+    link.download = "suhel-chicken-traders-qr.png";
+    link.href = downloadCanvas.toDataURL("image/png");
+    link.click();
   }, []);
 
   return (
@@ -179,14 +263,12 @@ export function QRCodeSection() {
                 boxShadow: "0 4px 20px rgba(204,0,0,0.15)",
               }}
             >
-              <QRCodeSVG
-                ref={svgRef}
+              <QRCodeCanvas
                 value={appUrl}
                 size={200}
                 fgColor="#CC0000"
                 bgColor="#FFFFFF"
-                level="H"
-                marginSize={0}
+                canvasRef={canvasRef}
               />
             </div>
 

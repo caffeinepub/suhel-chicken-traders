@@ -1,3 +1,4 @@
+import { useAdminStore } from "@/stores/adminStore";
 import { useAppStore } from "@/stores/appStore";
 import { useCartStore } from "@/stores/cartStore";
 import { AlertCircle, MapPin, MessageCircle, X } from "lucide-react";
@@ -8,6 +9,7 @@ interface CheckoutFormData {
   name: string;
   phone: string;
   address: string;
+  paymentMethod: "upi";
 }
 
 function buildWhatsAppMessage(
@@ -22,6 +24,8 @@ function buildWhatsAppMessage(
     )
     .join("\n");
 
+  const paymentNote = "💳 Payment: UPI (sq49198@oksbi)";
+
   return `🐔 *New Order - Suhel Chicken Traders*
 
 👤 Name: ${data.name}
@@ -33,12 +37,13 @@ ${itemList}
 
 💰 *Total: ₹${total.toFixed(2)}*
 
-💳 Payment: Cash on Delivery`;
+${paymentNote}`;
 }
 
 export function CheckoutModal() {
   const { showCheckout, closeCheckout, showOrderConfirmation } = useAppStore();
   const { items, getTotalPrice, clearCart } = useCartStore();
+  const { addOrder } = useAdminStore();
   const total = getTotalPrice();
 
   const {
@@ -46,9 +51,24 @@ export function CheckoutModal() {
     handleSubmit,
     formState: { errors, isSubmitting },
     reset,
-  } = useForm<CheckoutFormData>();
+  } = useForm<CheckoutFormData>({ defaultValues: { paymentMethod: "upi" } });
 
   const onSubmit = (data: CheckoutFormData) => {
+    addOrder({
+      customerName: data.name,
+      phone: data.phone,
+      address: data.address,
+      items: items.map((item) => ({
+        id: item.id,
+        name: item.name,
+        weightGrams: item.weightGrams,
+        pricePerKg: item.pricePerKg,
+        totalPrice: item.totalPrice,
+      })),
+      total,
+      paymentMethod: data.paymentMethod,
+    });
+
     const message = buildWhatsAppMessage(data, items, total);
     const whatsappUrl = `https://wa.me/919301567327?text=${encodeURIComponent(message)}`;
     window.open(whatsappUrl, "_blank");
@@ -89,26 +109,23 @@ export function CheckoutModal() {
             }}
           />
 
-          {/* Modal */}
+          {/* Modal - full screen bottom sheet on mobile */}
           <motion.div
             key="checkout-modal"
-            initial={{ opacity: 0, scale: 0.9, y: 20 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.9, y: 20 }}
-            transition={{ type: "spring", stiffness: 300, damping: 28 }}
+            initial={{ opacity: 0, y: "100%" }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: "100%" }}
+            transition={{ type: "spring", stiffness: 280, damping: 32 }}
             style={{
               position: "fixed",
-              top: "50%",
-              left: "50%",
-              transform: "translate(-50%, -50%)",
-              width: "min(520px, calc(100vw - 32px))",
-              maxHeight: "calc(100vh - 48px)",
+              bottom: 0,
+              left: 0,
+              right: 0,
+              top: 0,
               background: "#1A1A1A",
-              borderRadius: "20px",
+              borderRadius: "0px",
               zIndex: 301,
               overflow: "hidden",
-              boxShadow: "0 24px 80px rgba(0,0,0,0.7)",
-              border: "1px solid rgba(255,255,255,0.08)",
               display: "flex",
               flexDirection: "column",
             }}
@@ -116,7 +133,7 @@ export function CheckoutModal() {
             {/* Header */}
             <div
               style={{
-                padding: "20px 24px",
+                padding: "16px 20px",
                 background:
                   "linear-gradient(135deg, rgba(139,0,0,0.5), rgba(0,0,0,0.2))",
                 borderBottom: "1px solid rgba(255,255,255,0.08)",
@@ -130,12 +147,12 @@ export function CheckoutModal() {
                 style={{
                   fontFamily: "'Playfair Display', Georgia, serif",
                   fontWeight: 700,
-                  fontSize: "22px",
+                  fontSize: "20px",
                   color: "white",
                   margin: 0,
                 }}
               >
-                Place Your Order
+                Order Details
               </h2>
               <motion.button
                 whileHover={{ scale: 1.1, rotate: 90 }}
@@ -166,11 +183,12 @@ export function CheckoutModal() {
                 overflowY: "auto",
                 flex: 1,
                 overscrollBehavior: "contain",
+                WebkitOverflowScrolling: "touch",
               }}
             >
               <form
                 onSubmit={handleSubmit(onSubmit)}
-                style={{ padding: "24px" }}
+                style={{ padding: "20px 20px 40px" }}
                 noValidate
               >
                 {/* Order Summary */}
@@ -503,7 +521,7 @@ export function CheckoutModal() {
                     )}
                   </div>
 
-                  {/* Payment Method */}
+                  {/* Payment Method - UPI Only */}
                   <div>
                     <p
                       style={{
@@ -512,49 +530,102 @@ export function CheckoutModal() {
                         fontSize: "13px",
                         fontWeight: 600,
                         color: "rgba(255,255,255,0.7)",
-                        marginBottom: "8px",
                         letterSpacing: "0.04em",
-                        margin: "0 0 8px",
+                        margin: "0 0 10px",
                       }}
                     >
                       Payment Method
                     </p>
                     <div
                       style={{
-                        background: "rgba(37,211,102,0.1)",
-                        border: "1.5px solid rgba(37,211,102,0.4)",
-                        borderRadius: "10px",
-                        padding: "12px 16px",
                         display: "flex",
+                        flexDirection: "column",
                         alignItems: "center",
-                        gap: "10px",
+                        gap: "8px",
+                        background: "rgba(255,153,0,0.1)",
+                        border: "1.5px solid rgba(255,153,0,0.6)",
+                        borderRadius: "12px",
+                        padding: "16px",
                       }}
                     >
-                      <span style={{ fontSize: "20px" }}>💵</span>
-                      <div>
-                        <p
+                      <div
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          gap: "10px",
+                          width: "100%",
+                        }}
+                      >
+                        <span style={{ fontSize: "24px" }}>📲</span>
+                        <div style={{ flex: 1 }}>
+                          <p
+                            style={{
+                              fontFamily: "'Inter', sans-serif",
+                              fontWeight: 700,
+                              fontSize: "15px",
+                              color: "#FF9900",
+                              margin: 0,
+                            }}
+                          >
+                            UPI / Google Pay
+                          </p>
+                          <p
+                            style={{
+                              fontFamily: "'Inter', sans-serif",
+                              fontSize: "12px",
+                              color: "rgba(255,255,255,0.6)",
+                              margin: "2px 0 0",
+                              letterSpacing: "0.03em",
+                            }}
+                          >
+                            UPI ID:{" "}
+                            <strong style={{ color: "#FFD700" }}>
+                              sq49198@oksbi
+                            </strong>
+                          </p>
+                        </div>
+                      </div>
+                      <div
+                        style={{
+                          width: "100%",
+                          display: "flex",
+                          flexDirection: "column",
+                          alignItems: "center",
+                          gap: "8px",
+                          paddingTop: "12px",
+                          borderTop: "1px solid rgba(255,153,0,0.2)",
+                        }}
+                      >
+                        <img
+                          src="/assets/uploads/GooglePay_QR-1.png"
+                          alt="Google Pay QR Code"
                           style={{
-                            fontFamily: "'Inter', sans-serif",
-                            fontWeight: 600,
-                            fontSize: "14px",
-                            color: "#25D366",
-                            margin: 0,
+                            width: "180px",
+                            height: "180px",
+                            objectFit: "contain",
+                            borderRadius: "10px",
+                            background: "white",
+                            padding: "8px",
                           }}
-                        >
-                          Cash on Delivery
-                        </p>
+                        />
                         <p
                           style={{
                             fontFamily: "'Inter', sans-serif",
                             fontSize: "12px",
-                            color: "rgba(255,255,255,0.45)",
-                            margin: "2px 0 0",
+                            color: "rgba(255,255,255,0.6)",
+                            margin: 0,
+                            textAlign: "center",
                           }}
                         >
-                          Pay when your order arrives
+                          Scan karein kisi bhi UPI app se
                         </p>
                       </div>
                     </div>
+                    <input
+                      type="hidden"
+                      value="upi"
+                      {...register("paymentMethod")}
+                    />
                   </div>
                 </div>
 

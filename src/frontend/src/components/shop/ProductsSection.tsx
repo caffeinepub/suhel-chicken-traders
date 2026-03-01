@@ -6,11 +6,14 @@ export function ProductsSection() {
   const {
     cuttingPrice,
     zindaPrice,
-    cuttingInStock,
-    zindaInStock,
+    cuttingStock,
+    zindaStock,
     cuttingFreshToday,
     zindaFreshToday,
   } = useAdminStore();
+
+  const cuttingInStock = cuttingStock > 0;
+  const zindaInStock = zindaStock > 0;
 
   return (
     <section

@@ -2,7 +2,6 @@ import { useCartStore } from "@/stores/cartStore";
 import { Minus, Plus, ShoppingCart, Star } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import { useCallback, useState } from "react";
-import { CuttingChickenSvg, ZindaChickenSvg } from "./SvgAssets";
 
 interface ProductCardProps {
   id: "cutting" | "zinda";
@@ -256,7 +255,31 @@ export function ProductCard({
           background: `linear-gradient(180deg, ${accentColor}12 0%, transparent 100%)`,
         }}
       >
-        {isCutting ? <CuttingChickenSvg /> : <ZindaChickenSvg />}
+        {isCutting ? (
+          <img
+            src="/assets/generated/chicken-cutting-3d.dim_600x500.png"
+            alt="Cutting Chicken"
+            style={{
+              width: "100%",
+              maxWidth: "260px",
+              height: "180px",
+              objectFit: "contain",
+              borderRadius: "12px",
+            }}
+          />
+        ) : (
+          <img
+            src="/assets/generated/broiler-chicken-live.dim_600x500.png"
+            alt="Zinda Chicken"
+            style={{
+              width: "100%",
+              maxWidth: "260px",
+              height: "180px",
+              objectFit: "contain",
+              borderRadius: "12px",
+            }}
+          />
+        )}
       </div>
 
       {/* Controls */}

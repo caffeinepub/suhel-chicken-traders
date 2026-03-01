@@ -5,6 +5,7 @@ import { CheckoutModal } from "@/components/shop/CheckoutModal";
 import { Footer } from "@/components/shop/Footer";
 import { Header } from "@/components/shop/Header";
 import { HeroSection } from "@/components/shop/HeroSection";
+import { InstallBanner } from "@/components/shop/InstallBanner";
 import { OrderConfirmation } from "@/components/shop/OrderConfirmation";
 import { ProductsSection } from "@/components/shop/ProductsSection";
 import { QRCodeSection } from "@/components/shop/QRCodeSection";
@@ -40,6 +41,9 @@ export default function App() {
       {/* Admin */}
       <AdminPanel />
       <AdminButton />
+
+      {/* Install Prompt */}
+      <InstallBanner />
     </div>
   );
 }

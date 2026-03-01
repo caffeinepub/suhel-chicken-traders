@@ -164,6 +164,24 @@ export function Footer() {
                 <MessageCircle size={16} color="#25D366" />
                 <span>WhatsApp: 9301567327</span>
               </motion.a>
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "10px",
+                  color: "rgba(255,255,255,0.65)",
+                  fontFamily: "'Inter', sans-serif",
+                  fontSize: "14px",
+                }}
+              >
+                <span style={{ fontSize: "16px" }}>📲</span>
+                <span>
+                  UPI:{" "}
+                  <span style={{ color: "#FFD700", fontWeight: 600 }}>
+                    9301567327
+                  </span>
+                </span>
+              </div>
             </div>
           </div>
 
