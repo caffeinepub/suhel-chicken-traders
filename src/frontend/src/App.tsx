@@ -7,6 +7,7 @@ import { Header } from "@/components/shop/Header";
 import { HeroSection } from "@/components/shop/HeroSection";
 import { OrderConfirmation } from "@/components/shop/OrderConfirmation";
 import { ProductsSection } from "@/components/shop/ProductsSection";
+import { QRCodeSection } from "@/components/shop/QRCodeSection";
 
 export default function App() {
   return (
@@ -25,6 +26,7 @@ export default function App() {
       <main>
         <HeroSection />
         <ProductsSection />
+        <QRCodeSection />
       </main>
 
       {/* Footer */}
